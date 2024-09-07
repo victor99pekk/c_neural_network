@@ -22,14 +22,14 @@ typedef struct{
     Mat *ws;
     Mat *bs;
     Mat *as; // amount of activations is count +1
-    Adam adam;
+    Adam *adam;
 } NN;
 
 NN nn_alloc(size_t *arch, size_t arch_count);
 void nn_print(NN nn, const char *c);
 void nn_rand(NN nn, float low, float high);
 void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
-void nn_learn(NN nn, NN g/* , float step */);
+void nn_learn(NN* nn, NN g/* , float step */);
 void nn_print_output(NN nn, Mat ti, Mat to);
 void nn_symmetric(NN nn, float low, float high);
 
@@ -40,17 +40,20 @@ void nn_symmetric(NN nn, float low, float high);
 #define NN_INPUT(nn) (nn).as[0]
 #define NN_OUTPUT(nn) (nn).as[(nn).count]
 #define CREATE_NN(arch) nn_alloc(arch, ARRAY_LEN(arch))
-#define step learning_rate(nn.adam, gradient)
+// #define STEP learning_rate(nn.adam, gradient)
+#define STEP(nn, gradient) learning_rate((nn).adam, (gradient))
 
 
-float learning_rate(Adam adam, float gradient)
+float learning_rate(Adam *adam, float gradient)
 {
-    adam.m = adam.beta1 * adam.m + (1 - adam.beta1) * gradient;
-    float mk = adam.m / (1 - powf(adam.beta1, adam.count));
-    adam.v = adam.beta2 * adam.v + (1 - adam.beta2) * gradient * gradient;
-    float vk = adam.v / (1 - powf(adam.beta2, adam.count));
-    float div = sqrtf(adam.v) + 1e-8;
-    return adam.learning_rate * (mk / div);
+    adam->count += 1;
+    adam->m = adam->beta1 * adam->m + (1 - adam->beta1) * gradient;
+    float mk = adam->m / (1 - powf(adam->beta1, adam->count));
+    adam->v = adam->beta2 * adam->v + (1 - adam->beta2) * gradient * gradient;
+    float vk = adam->v / (1 - powf(adam->beta2, adam->count));
+    float div = sqrtf(vk) + 1e-8;
+    
+    return adam->learning_rate * (mk / div);
 }
 
 void nn_print(NN nn, const char *name)
@@ -87,14 +90,28 @@ NN nn_alloc(size_t *arch, size_t arch_count)
         nn.as[i+1] = mat_alloc(1, arch[i+1]);
     }
 
-    nn.adam = (Adam){
-        .learning_rate = 1e-4,
-        .count = 1,
+    nn.adam = (Adam *)malloc(sizeof(Adam));
+    if (nn.adam == NULL) {
+        // Handle memory allocation failure
+        exit(1);
+    }
+    *(nn.adam) = (Adam){
+        .learning_rate = 0.01,
+        .beta1 = 0.9,
+        .beta2 = 0.999,
         .m = 0,
         .v = 0,
-        .beta1 = 0.9,
-        .beta2 = 0.999
+        .count = 0
     };
+
+    // nn->adam = (Adam){
+    //     .learning_rate = 1e-4,
+    //     .count = 0,
+    //     .m = 0,
+    //     .v = 0,
+    //     .beta1 = 0.9,
+    //     .beta2 = 0.999
+    // };
 
     SYMMETRIC_INIT(nn);
 
@@ -165,24 +182,81 @@ void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to)
     }
 }
 
-void nn_learn(NN nn, NN g)
+void nn_clear(NN nn)
 {
-    float rate;
-    for(size_t layers = 0; layers < nn.count; layers++){
-        for(size_t r = 0; r < nn.ws[layers].rows; r++){
-            for(size_t c = 0; c < nn.ws[layers].cols; c++){
-                float gradient = MAT_AT(g.ws[layers], r, c);
-                MAT_AT(nn.ws[layers], r, c) -= step;
-            }
+    for (size_t i = 0; i < nn.count; i++) {
+        mat_fill(nn.ws[i], 0);
+        mat_fill(nn.bs[i], 0);
+        mat_fill(nn.as[i], 0);
+    }
+    mat_fill(nn.as[nn.count-1], 0);
+}
+
+void backprop(NN nn, NN g, Mat ti, Mat to){
+    assert(NN_OUTPUT(nn).cols == to.cols);
+
+    nn_clear(g);
+    size_t n = ti.rows;
+
+    for(size_t i = 0; i < n; i++){
+        mat_copy(NN_INPUT(nn), mat_row(ti, i));
+        nn_forward(nn);
+
+        for(size_t j = 0; j < to.cols; j++){
+            MAT_AT(NN_OUTPUT(g), 0, j) = MAT_AT(NN_OUTPUT(nn), 0, j) - MAT_AT(to, i, j);
         }
-        for(size_t r = 0; r < nn.bs[layers].rows; r++){
-            for(size_t c = 0; c < nn.bs[layers].cols; c++){
-                float gradient = MAT_AT(g.bs[layers], r, c);
-                MAT_AT(nn.bs[layers], r, c) -= step;
+
+        for (size_t l = nn.count; l > 0; l--){
+            for (size_t c = 0; c < nn.as[l].cols; c++){
+                // l - layer
+                // c - column
+                float activation = MAT_AT(nn.as[l], 0, c);
+                float g_activation = MAT_AT(g.as[l], 0, c);
+
+                MAT_AT(g.bs[l-1], 0, c) += 2 * g_activation * activation * (1 - activation);
+                for(size_t k = 0; k < nn.as[l-1].cols; k++){
+                    float prev_activation = MAT_AT(nn.as[l-1], 0, k);
+                    float weight = MAT_AT(nn.ws[l-1], k, c);
+                    MAT_AT(g.ws[l-1], k, c) += 2 * g_activation * activation * (1 - activation) * prev_activation;
+                    MAT_AT(g.as[l-1], 0, k) += 2 * g_activation * activation * (1 - activation) * weight;
+                }
             }
         }
     }
-    nn.adam.count++;
+    for (size_t i = 0; i < nn.count; i++){
+        for (size_t r = 0; r < g.ws[i].rows; r++){
+            for (size_t c = 0; c < g.ws[i].cols; c++){
+                MAT_AT(g.ws[i], r, c) /= n;
+            }
+        }
+        for (size_t r = 0; r < g.bs[i].rows; r++){
+            for (size_t c = 0; c < g.bs[i].cols; c++){
+                MAT_AT(g.bs[i], r, c) /= n;
+            }
+        }
+    }
+
+
+}
+
+
+
+void nn_learn(NN* nn, NN g)
+{
+    for(size_t layers = 0; layers < nn->count; layers++){
+        for(size_t r = 0; r < nn->ws[layers].rows; r++){
+            for(size_t c = 0; c < nn->ws[layers].cols; c++){
+                float gradient = MAT_AT(g.ws[layers], r, c);
+                MAT_AT(nn->ws[layers], r, c) -= STEP(*nn, gradient);
+            }
+        }
+        for(size_t r = 0; r < nn->bs[layers].rows; r++){
+            for(size_t c = 0; c < nn->bs[layers].cols; c++){
+                float gradient = MAT_AT(g.bs[layers], r, c);
+                MAT_AT(nn->bs[layers], r, c) -= STEP(*nn, gradient);
+            }
+        }
+    }
 }
 
 void nn_print_output(NN nn, Mat ti, Mat to)
@@ -196,7 +270,7 @@ void nn_print_output(NN nn, Mat ti, Mat to)
         Mat target = mat_row(to, i);
         mat_copy(NN_INPUT(nn), input);
         nn_forward(nn);
-        size_t q = to.cols;
+        //size_t q = to.cols;
 
         printf("\nDATA-SAMPLE: %zu\n", i+1);
         mat_print(input, "input", 15);
@@ -206,12 +280,13 @@ void nn_print_output(NN nn, Mat ti, Mat to)
     printf("cost: %f\n", nn_cost(nn, ti, to));
 }
 
-void train(NN nn, NN g2, Mat ti, Mat to, int iterations)
+void train(NN nn, NN g2, Mat ti, Mat to, size_t iterations)
 {
     iterations = iterations * 1000;
     for(size_t i = 0; i < iterations; i++){
-        nn_finite_diff(nn, g2, 1e-3, ti, to);
-        nn_learn(nn, g2);
+        // nn_finite_diff(nn, g2, 1e-3, ti, to);
+        backprop(nn, g2, ti, to);
+        nn_learn(&nn, g2);
     }
 
 }

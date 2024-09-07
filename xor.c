@@ -1,6 +1,6 @@
 
 #define NN_IMPLEMENTATION
-#include "onlymatrix.h"
+#include "nn_framework.h"
 
 float td[] = {
     0, 0, 0,
@@ -13,7 +13,8 @@ float td[] = {
 
 int main(void)
 {
-    srand(time(0));
+    // srand(time(0));
+    srand(69);
     size_t stride = 3;
 
     size_t n = sizeof(td)/sizeof(td[0])/stride;
@@ -36,7 +37,7 @@ int main(void)
     NN nn = CREATE_NN(arch);
     NN g2 = CREATE_NN(arch);
 
-    train(nn, g2, ti, to, 5);
+    train(nn, g2, ti, to, 10);
     NN_PRINT(nn);
     nn_print_output(nn, ti, to);    //NN_PRINT(nn);
 
