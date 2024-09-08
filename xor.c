@@ -1,6 +1,6 @@
 
 #define NN_IMPLEMENTATION
-#include "onlymatrix.h"
+#include "nn_framework.h"
 
 float td[] = {
     0, 0, 0,
