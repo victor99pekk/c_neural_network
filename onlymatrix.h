@@ -77,6 +77,26 @@ void nn_print(NN nn, const char *name)
     }
 }
 
+Mat get_training_data(float* td, size_t stride, size_t col, size_t size){
+    size_t n = size/sizeof(td[0])/stride;
+    return (Mat) {
+        .rows = n,
+        .cols = col,
+        .stride = stride,
+        .es = td
+    };
+}
+
+Mat get_training_input(float* td, size_t stride, size_t col, size_t size){
+    size_t n = size/sizeof(td[0])/stride;
+    return (Mat) {
+        .rows = n,
+        .cols = col,
+        .stride = stride,
+        .es = td
+    };
+}
+
 Gradients create_gradient(size_t *arch, size_t arch_count){
 
     Gradients g;
