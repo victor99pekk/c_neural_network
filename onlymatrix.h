@@ -35,7 +35,7 @@ typedef struct {
 
 
 
-NN nn_alloc(size_t *arch, size_t arch_count);
+NN nn_alloc(size_t *arch, size_t arch_count, float stepsize);
 void nn_print(NN nn, const char *c);
 void nn_rand(NN nn, float low, float high);
 void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
@@ -49,7 +49,7 @@ void nn_symmetric(NN nn, float low, float high);
 #define NN_PRINT(n) nn_print(nn, "neural network")
 #define NN_INPUT(nn) (nn).as[0]
 #define NN_OUTPUT(nn) (nn).as[(nn).count]
-#define CREATE_NN(arch) nn_alloc(arch, ARRAY_LEN(arch))
+#define CREATE_NN(arch, stepsize) nn_alloc(arch, ARRAY_LEN(arch), stepsize)
 #define step learning_rate(nn.adam, gradient)
 
 
@@ -97,7 +97,7 @@ Gradients create_gradient(size_t *arch, size_t arch_count){
     return g;
 }
 
-NN nn_alloc(size_t *arch, size_t arch_count)
+NN nn_alloc(size_t *arch, size_t arch_count, float stepsize)
 {
     matrix_ASSERT(arch_count > 0);
     NN nn;
@@ -119,7 +119,7 @@ NN nn_alloc(size_t *arch, size_t arch_count)
     (nn.g) = create_gradient(arch, arch_count);
 
     nn.adam = (Adam){
-        .learning_rate = 1e-4,
+        .learning_rate = stepsize,
         .count = 1,
         .m = 0,
         .v = 0,

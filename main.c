@@ -33,7 +33,7 @@ int main(void)
     };
 
     size_t arch[] = {2, 2, 1};
-    NN nn = CREATE_NN(arch);
+    NN nn = CREATE_NN(arch, 1e-4);
 
     train(nn, ti, to, 5);
     NN_PRINT(nn);
