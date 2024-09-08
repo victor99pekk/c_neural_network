@@ -91,7 +91,7 @@ Mat get_training_input(float* td, size_t stride, size_t col, size_t n){
         .rows = n,
         .cols = col,
         .stride = stride,
-        .es = td
+        .es = td+2
     };
 }
 

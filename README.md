@@ -1,7 +1,7 @@
 # c_neural_network
 Neural network framework created to easily create various kinds of neural networks in c.
 
-### Create a network:
+## Create a network:
 Specify all hyperparameters for the neural network.
 1. number of hidden layers, and number of nodes in the hidden layers
 2. learning rate
@@ -13,10 +13,10 @@ NN nn = CREATE_NN(arch, learning_rate);
 ```
 <br>
 
-### Create training data:
+## Create training data:
 define the training data. You have to define the a set of input to the neural network and it's expected output.
 
-1. `stride` is how man is the number input parameters plus the number of outputs.
+1. `stride` is the number input parameters plus the number of outputs.
 
 `ti` is input data that the nn can learn to fit.
 
@@ -38,7 +38,7 @@ Mat to = get_training_data(td, stride, 1, sizeof(td));
 ```
 
 
-### Train the Network
+## Train the Network
 the train function takes 4 parameters.
 1. A NN-struct who's weights will change to fit the input data.
 2. training input and output, `ti` and `to`.
@@ -48,12 +48,12 @@ the train function takes 4 parameters.
 train(nn, ti, to, 5);
 ```
 
-### Analyze the network
-helpful function to analyse the network are to print the network, and see what the network outputs with specific input.
+## Analyze the network
+helpful function to analyze the network are to print the network, and see what the network outputs with specific input.
 
 1. `NN_PRINT(NN nn)` prints all the layers and all the weights of the network. This can be helpful when you're dealing with smaller networks. but not so helpful when dealing with large ones.
 
-    a network train to solve XORis printed as below:
+    a network train to solve XOR is printed as below:
 ```c
 neural network
     ws0: 
@@ -71,7 +71,7 @@ neural network
         -1.029707 
 ```
 <br>
-2. `nn_print_output(nn, ti, to)` prints the an input to the nn, the exptected output, and the value that the nn outputs.
+2. nn_print_output(nn, ti, to) prints the an input to the nn, the exptected output, and the value that the nn outputs.
 <br>
 
 <br>
@@ -111,5 +111,8 @@ DATA-SAMPLE: 2
 ```c
 nn_cost(nn, ti, to) // returns a float number that is the cost
 
-print_cost(nn)      // prints: cost: 0.000000
+print_cost(nn, ti, to)      
+// => prints: 
+
+// cost: 0.000002
 ```

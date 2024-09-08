@@ -19,7 +19,7 @@ int main(void)
     size_t n = sizeof(td)/sizeof(td[0])/stride;
 
     Mat ti = get_training_data(td, stride, 2, n);
-    Mat to = get_training_data(td, stride, 1, n);
+    Mat to = get_training_data(td+2, stride, 1, n);
 
     size_t arch[] = {2, 2, 1};
     NN nn = CREATE_NN(arch, 1e-4);
