@@ -34,9 +34,8 @@ int main(void)
 
     size_t arch[] = {2, 2, 1};
     NN nn = CREATE_NN(arch);
-    NN g2 = CREATE_NN(arch);
 
-    train(nn, g2, ti, to, 5);
+    train(nn, ti, to, 5);
     NN_PRINT(nn);
     nn_print_output(nn, ti, to);    //NN_PRINT(nn);
 

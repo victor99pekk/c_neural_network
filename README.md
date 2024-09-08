@@ -1,6 +1,7 @@
 # c_neural_network
-Neural network framework coded in C. Uses the framework I have coded for matrix operations
 
-the network can be implemented with arbitrary amounts of layers and nodes in the layers. The optimizer for the learning rate currently used is Adam.
-I try the network a little bit in the main-method where I implement a minimal network to solve the XOR problem.
+### Create a network:
+```c
+size_t arch[] = {2, 2, 1};  // formulate the number of layers and nodes in each layer
 
+NN nn = CREATE_NN(arch);
