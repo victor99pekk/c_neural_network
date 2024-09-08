@@ -77,8 +77,7 @@ void nn_print(NN nn, const char *name)
     }
 }
 
-Mat get_training_data(float* td, size_t stride, size_t col, size_t size){
-    size_t n = size/sizeof(td[0])/stride;
+Mat get_training_data(float* td, size_t stride, size_t col, size_t n){
     return (Mat) {
         .rows = n,
         .cols = col,
@@ -87,8 +86,7 @@ Mat get_training_data(float* td, size_t stride, size_t col, size_t size){
     };
 }
 
-Mat get_training_input(float* td, size_t stride, size_t col, size_t size){
-    size_t n = size/sizeof(td[0])/stride;
+Mat get_training_input(float* td, size_t stride, size_t col, size_t n){
     return (Mat) {
         .rows = n,
         .cols = col,
@@ -298,6 +296,10 @@ void nn_learn(NN nn)
         }
     }
     nn.adam.count++;
+}
+
+void print_cost(NN nn, Mat ti, Mat to){
+    printf("cost: %f\n", nn_cost(nn, ti, to));
 }
 
 void nn_print_output(NN nn, Mat ti, Mat to)

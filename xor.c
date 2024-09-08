@@ -18,8 +18,8 @@ int main(void)
 
     size_t n = sizeof(td)/sizeof(td[0])/stride;
 
-    Mat ti = get_training_data(td, stride, 2, sizeof(td));
-    Mat to = get_training_data(td, stride, 1, sizeof(td));
+    Mat ti = get_training_data(td, stride, 2, n);
+    Mat to = get_training_data(td, stride, 1, n);
 
     size_t arch[] = {2, 2, 1};
     NN nn = CREATE_NN(arch, 1e-4);
@@ -28,6 +28,6 @@ int main(void)
     NN_PRINT(nn);
     nn_print_output(nn, ti, to);    //NN_PRINT(nn);
 
-    printf("cost: %f\n", nn_cost(nn, ti, to));
+    print_cost(nn, ti, to);
     return 0;
 }
