@@ -1,6 +1,15 @@
 # c_neural_network
 Neural network framework created to easily create various kinds of neural networks in c.
 
+## contents
+- [c\_neural\_network](#c_neural_network)
+  - [contents](#contents)
+  - [Create a network:](#create-a-network)
+  - [Create training data:](#create-training-data)
+  - [Train the Network](#train-the-network)
+  - [Analyze the network](#analyze-the-network)
+
+
 ## Create a network:
 Specify all hyperparameters for the neural network.
 1. number of hidden layers, and number of nodes in the hidden layers
