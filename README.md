@@ -14,27 +14,23 @@ NN nn = CREATE_NN(arch, learning_rate);
 <br>
 
 ## Create training data:
-define the training data. You have to define the a set of input to the neural network and it's expected output.
+To create the training and test data for the network we use a data loader that converts a .txt file into a matrix containing the data. Each row of the matrix belongs to one data point.
 
-1. `stride` is the number input parameters plus the number of outputs.
 
-`ti` is input data that the nn can learn to fit.
+Here "data.txt" looks should follow a framework where the first row contains 2 numbers, first is input dim, the second is the target dim. The training data text file would look like the following:
+```plaintext
+2 1
+0 0 0
+0 1 1
+1 0 1
+1 1 0
+```
 
-`to` is the expected output that the nn learns to fit as well as possible.
 
+Load the training/test data:
 ```c
-float td[] = {
-    0, 0, 0,
-    0, 1, 1,
-    1, 0, 1,
-    1, 1, 0,
-};
-
-size_t stride = 3;
-size_t n = sizeof(td)/sizeof(td[0])/stride;
-
-Mat ti = get_training_data(td, stride, 2, sizeof(td));
-Mat to = get_training_data(td, stride, 1, sizeof(td));
+Mat ti, to;
+get_data("data.txt", &ti, &to);
 ```
 
 

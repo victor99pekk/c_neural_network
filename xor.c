@@ -1,33 +1,22 @@
-
 #define NN_IMPLEMENTATION
 #include "nn_framework.h"
 
-float td[] = {
-    0, 0, 0,
-    0, 1, 1,
-    1, 0, 1,
-    1, 1, 0,
-};
-
-
-
-int main(void)
+int
+main(void)
 {
     srand(time(0));
-    size_t stride = 3;
 
-    size_t n = sizeof(td)/sizeof(td[0])/stride;
+    /* ── load «xor.txt» ───────────────────────────────────────── */
+    Mat ti, to;
+    get_data("xor.txt", &ti, &to);          /* automatically sets rows / cols */
 
-    Mat ti = get_training_data(td, stride, 2, n);
-    Mat to = get_training_data(td+2, stride, 1, n);
+    /* network architecture matches the data file */
+    size_t arch[] = { ti.cols, 2, to.cols };
+    NN     nn     = CREATE_NN(arch, 1e-4);
 
-    size_t arch[] = {2, 2, 1};
-    NN nn = CREATE_NN(arch, 1e-4);
+    train(nn, ti, to, 5);                   /* 5 × 1000 iterations */
+    nn_print_output(nn, ti, to);
 
-    train(nn, ti, to, 5);
-    NN_PRINT(nn);
-    nn_print_output(nn, ti, to);    //NN_PRINT(nn);
-
-    print_cost(nn, ti, to);
+    free(ti.es);                            /* one-and-done cleanup */
     return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef NN_H_
 #define NN_H_
 
-#include "../matrix_framework/matrix.h"
+#include "matrix.h"
 #include <stddef.h>
 #include <assert.h>  // for assert
 #include <stdio.h>
@@ -42,6 +42,8 @@ void nn_finite_diff(NN nn, NN g, float eps, Mat ti, Mat to);
 void nn_learn(NN nn/*, NN g , float step */);
 void nn_print_output(NN nn, Mat ti, Mat to);
 void nn_symmetric(NN nn, float low, float high);
+size_t get_data(const char *filename, Mat *ti, Mat *to);
+
 
 #define NN_RAND(nn) nn_rand(nn, 0, 3)
 #define SYMMETRIC_INIT(nn) nn_symmetric(nn, 0, 3)
@@ -51,6 +53,47 @@ void nn_symmetric(NN nn, float low, float high);
 #define NN_OUTPUT(nn) (nn).as[(nn).count]
 #define CREATE_NN(arch, stepsize) nn_alloc(arch, ARRAY_LEN(arch), stepsize)
 #define step learning_rate(nn.adam, gradient)
+/* read a training-set from text-file ─ see implementation below */
+
+size_t
+get_data(const char *filename, Mat *ti, Mat *to)
+{
+    FILE *fp = fopen(filename, "r");
+    if (!fp) { perror(filename); exit(EXIT_FAILURE); }
+
+    size_t in_dim, out_dim;
+    if (fscanf(fp, "%zu %zu", &in_dim, &out_dim) != 2) {
+        fprintf(stderr, "get_data: bad header in «%s»\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    const size_t stride = in_dim + out_dim;
+    size_t        cap   = 16;                     /* growable buffer   */
+    size_t        rows  = 0;
+    float *buf = (float *)matrix_MALLOC(sizeof *buf * cap * stride);
+    matrix_ASSERT(buf);
+
+    while (1) {                                   /* read one sample   */
+        float tmp;
+        if (fscanf(fp, "%f", &tmp) != 1) break;   /* EOF reached       */
+        if (rows == cap) {                        /* grow buffer       */
+            cap *= 2;
+            buf = (float *)realloc(buf, sizeof *buf * cap * stride);
+            matrix_ASSERT(buf);
+        }
+        buf[rows * stride] = tmp;
+        for (size_t j = 1; j < stride; ++j)
+            matrix_ASSERT(fscanf(fp, "%f", &buf[rows * stride + j]) == 1);
+        ++rows;
+    }
+    fclose(fp);
+
+    *ti = (Mat){ .rows = rows, .cols = in_dim,
+                 .stride = stride, .es = buf };
+    *to = (Mat){ .rows = rows, .cols = out_dim,
+                 .stride = stride, .es = buf + in_dim };
+    return rows;
+}
 
 
 float learning_rate(Adam adam, float gradient)
@@ -58,7 +101,7 @@ float learning_rate(Adam adam, float gradient)
     adam.m = adam.beta1 * adam.m + (1 - adam.beta1) * gradient;
     float mk = adam.m / (1 - powf(adam.beta1, adam.count));
     adam.v = adam.beta2 * adam.v + (1 - adam.beta2) * gradient * gradient;
-    float vk = adam.v / (1 - powf(adam.beta2, adam.count));
+    //float vk = adam.v / (1 - powf(adam.beta2, adam.count));
     float div = sqrtf(adam.v) + 1e-8;
     return adam.learning_rate * (mk / div);
 }
