@@ -3,7 +3,7 @@
 
 #include "matrix.h"
 #include <stddef.h>
-#include <assert.h>  // for assert
+#include <assert.h>  
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -68,15 +68,15 @@ get_data(const char *filename, Mat *ti, Mat *to)
     }
 
     const size_t stride = in_dim + out_dim;
-    size_t        cap   = 16;                     /* growable buffer   */
+    size_t        cap   = 16;                     
     size_t        rows  = 0;
     float *buf = (float *)matrix_MALLOC(sizeof *buf * cap * stride);
     matrix_ASSERT(buf);
 
-    while (1) {                                   /* read one sample   */
+    while (1) {                                  
         float tmp;
-        if (fscanf(fp, "%f", &tmp) != 1) break;   /* EOF reached       */
-        if (rows == cap) {                        /* grow buffer       */
+        if (fscanf(fp, "%f", &tmp) != 1) break;   
+        if (rows == cap) {                       
             cap *= 2;
             buf = (float *)realloc(buf, sizeof *buf * cap * stride);
             matrix_ASSERT(buf);
@@ -345,7 +345,7 @@ void print_cost(NN nn, Mat ti, Mat to){
     printf("cost: %f\n", nn_cost(nn, ti, to));
 }
 
-void nn_print_output(NN nn, Mat ti, Mat to)
+void evaluate(NN nn, Mat ti, Mat to)
 {
     assert(ti.rows == to.rows);
     assert(to.cols == NN_OUTPUT(nn).cols);

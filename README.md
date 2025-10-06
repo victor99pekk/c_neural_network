@@ -1,5 +1,5 @@
 # c_neural_network
-Neural network framework created to easily create various kinds of neural networks in c.
+Neural network framework created to easily create various kinds of neural networks in c. A simple example of a network solving `xor` can be [seen](example_xor.c)
 
 ## contents
 - [c\_neural\_network](#c_neural_network)
